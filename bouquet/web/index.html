@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#070505">
+<title>For Jane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Italiana&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4e8d8; --champagne:#e6d2b0; --blush:#eab3b9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#070505;color:var(--ink);
+    -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+  #veil{position:fixed;inset:0;background:#000;pointer-events:none;opacity:1;transition:opacity 1.6s ease}
+  .line{position:fixed;left:50%;transform:translate(-50%,0);width:min(92vw,880px);text-align:center;
+    font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-style:italic;
+    letter-spacing:.035em;color:var(--ink);pointer-events:none;opacity:0;filter:blur(6px);
+    transition:opacity 2.2s ease, filter 2.4s ease, letter-spacing 4s ease;
+    text-shadow:0 0 18px rgba(255,214,170,.28),0 0 2px rgba(0,0,0,.6)}
+  .line.on{opacity:1;filter:blur(0);letter-spacing:.06em}
+  #l1{top:50%;margin-top:-.7em;font-size:clamp(21px,3.1vw,36px)}
+  #l2{bottom:calc(15vh + 34px);font-size:clamp(17px,2.3vw,27px);line-height:1.35}
+  #l3{bottom:calc(15vh - 6px);font-size:clamp(17px,2.1vw,24px);color:#f1d9cf}
+  #l3 .heart{font-style:normal;font-size:.8em;filter:saturate(.8)}
+  @media (max-aspect-ratio: 3/4){ #l2{bottom:calc(11vh + 34px)} #l3{bottom:calc(11vh - 4px)} }
+
+  #gate{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:22px;cursor:pointer;transition:opacity 1.4s ease;z-index:5}
+  #gate.gone{opacity:0;pointer-events:none}
+  #gate .for{font-family:'Italiana',serif;font-size:clamp(34px,6vw,64px);letter-spacing:.18em;color:#f2e2cc;
+    text-shadow:0 0 30px rgba(255,200,150,.25);opacity:0;animation:rise 2.4s .3s ease forwards}
+  #gate .tap{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.42em;text-transform:uppercase;
+    color:rgba(236,220,196,.62);opacity:0;animation:rise 2s 1.4s ease forwards, breathe 3.2s 3.4s ease-in-out infinite}
+  #gate .ring{width:54px;height:54px;border-radius:50%;border:1px solid rgba(230,210,176,.35);position:relative;
+    opacity:0;animation:rise 2s 1s ease forwards}
+  #gate .ring::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1px solid rgba(230,210,176,.5);
+    animation:ripple 3.2s 2s ease-out infinite}
+  @keyframes rise{from{opacity:0;transform:translateY(10px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+  @keyframes breathe{0%,100%{opacity:.62}50%{opacity:.3}}
+  @keyframes ripple{from{transform:scale(1);opacity:.6}to{transform:scale(2.1);opacity:0}}
+
+  #ui{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;
+    align-items:center;gap:12px;pointer-events:none;opacity:0;transition:opacity 1.8s ease}
+  #ui.on{opacity:1}
+  #again{pointer-events:auto;font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:.34em;text-transform:uppercase;
+    color:#efe0c8;background:rgba(20,14,12,.35);border:1px solid rgba(230,210,176,.42);border-radius:999px;
+    padding:11px 24px 11px 28px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    transition:background .5s, border-color .5s, box-shadow .5s}
+  #again:hover{background:rgba(60,40,30,.45);border-color:rgba(240,220,186,.8);box-shadow:0 0 24px rgba(255,200,150,.18)}
+  #hint{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;letter-spacing:.06em;color:rgba(236,220,196,.55);
+    transition:opacity 1.2s}
+  #hint.gone{opacity:0}
+
+  #card{position:fixed;left:0;top:0;max-width:min(78vw,320px);padding:16px 20px 15px;border-radius:14px;
+    background:linear-gradient(160deg,rgba(38,26,22,.78),rgba(18,12,11,.82));border:1px solid rgba(230,210,176,.32);
+    box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 30px rgba(255,190,160,.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.35;text-align:center;color:#f6e9da;
+    opacity:0;transform:translateY(8px) scale(.98);transition:opacity .7s ease, transform .9s cubic-bezier(.2,.8,.2,1);
+    pointer-events:none;z-index:4}
+  #card.on{opacity:1;transform:none}
+  #card .orn{display:block;font-style:normal;font-size:11px;letter-spacing:.5em;color:rgba(230,190,170,.7);margin-bottom:6px}
+
+  #fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#070505;z-index:10;flex-direction:column;gap:18px}
+  #fallback video{max-width:100%;max-height:100%}
+  #fallback p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;text-align:center;padding:0 24px}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="veil"></div>
+
+<p class="line" id="l1"></p>
+<p class="line" id="l2"></p>
+<p class="line" id="l3"></p>
+
+<div id="card"><span class="orn">✦ ✦ ✦</span><span id="cardText"></span></div>
+
+<div id="ui">
+  <div id="hint">drag to turn · pinch to look closer · tap a flower</div>
+  <button id="again" type="button">Bloom Again</button>
+</div>
+
+<div id="gate"><div class="for" id="gateFor"></div><div class="ring"></div><div class="tap">touch to open</div></div>
+<div id="fallback"></div>
+
+<script type="module">
+/* ==========================================================================
+   A Bouquet That Blooms for You
+   --------------------------------------------------------------------------
+   Everything personal lives in CONFIG — edit freely.
+   If a file named bouquet.glb (exported by bouquet.py in Blender) sits next
+   to this page, it is used for the flowers. Otherwise the bouquet is grown
+   procedurally right here in the browser.
+   ========================================================================== */
+const CONFIG = {
+  to: 'Jane',
+  opening:   'Jane, I wanted to give you flowers…',
+  reveal:    'I’m sorry I don’t give you enough flowers.<br>’Til the day comes when I can buy you a whole garden, these are for you…',
+  signature: 'With love, Curtis <span class="heart">❤️</span>',
+  heroMessage: 'This rose opened first. It was always going to be for you.',
+  messages: [
+    'Every petal here is a moment I thought of you today.',
+    'If I could, I’d fill every room you walk into with these.',
+    'You make ordinary days feel like this one.',
+    'The distance is temporary. This feeling isn’t.',
+    'I picked this one because it reminded me of your smile.',
+    'Counting down to the day I hand you the real ones.',
+    'You are my favourite thing to look forward to.',
+    'No bouquet could hold everything I feel — but I’m trying.',
+    'Wherever you are right now, I’m thinking of you.',
+    'Softest colours I could find. Still not as soft as you.',
+    'One day these will be on our kitchen table.',
+    'Thank you for being exactly who you are.'
+  ],
+  glb: 'bouquet.glb',
+  fallbackVideo: 'bouquet_cinematic.mp4',
+  seed: 20261117
+};
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ---------- small helpers ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = t => t * t * (3 - 2 * t);
+const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const backOut = t => { const c1 = 1.25, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rand = mulberry(CONFIG.seed);
+const rr = (a, b) => a + (b - a) * rand();
+const deg = THREE.MathUtils.degToRad;
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const C = h => new THREE.Color(h);
+const isTouch = matchMedia('(pointer:coarse)').matches;
+
+/* ---------- timeline (seconds) ---------- */
+const T = {
+  text1In: 1.0, text1Out: 4.4,
+  hero: 5.0, heroBloom: [5.6, 11.2],
+  bouquetFrom: 10.6,
+  ribbon: [15.6, 18.6],
+  rotate: [17.4, 26],
+  text2: 20.0, text3: 22.6,
+  interactive: 25.8
+};
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+$('l1').textContent = CONFIG.opening;
+$('l2').innerHTML = CONFIG.reveal;
+$('l3').innerHTML = CONFIG.signature;
+$('gateFor').textContent = 'For ' + CONFIG.to;
+document.title = 'For ' + CONFIG.to;
+
+/* ---------- renderer ---------- */
+const canvas = $('gl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (e) { showFallback(); throw e; }
+let pixelRatio = Math.min(devicePixelRatio, isTouch ? 2 : 1.75);
+renderer.setPixelRatio(pixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = .92;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = makeBackdrop();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0;
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.02, 40);
+camera.position.set(0, 0.4, 4.5);
+
+function makeBackdrop() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(256, 230, 10, 256, 256, 380);
+  grd.addColorStop(0, '#1d1512'); grd.addColorStop(.45, '#110c0a'); grd.addColorStop(1, '#040303');
+  g.fillStyle = grd; g.fillRect(0, 0, 512, 512);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
+}
+
+/* ---------- shared shader hooks ---------- */
+const U = {
+  uTime: { value: 0 },                     // timeline time, for growth reveals
+  uLightDir: { value: new THREE.Vector3() }, // view-space dir to back light (translucency)
+  uTransCol: { value: new THREE.Color(1.0, 0.72, 0.5) },
+  uTransAmt: { value: 0 }
+};
+function translucent(mat, amount, key) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uLightDir = U.uLightDir; sh.uniforms.uTransCol = U.uTransCol; sh.uniforms.uTransAmt = U.uTransAmt;
+    sh.fragmentShader = 'uniform vec3 uLightDir; uniform vec3 uTransCol; uniform float uTransAmt;\n' +
+      sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        float backLit = pow(max(dot(-normal, uLightDir), 0.0), 1.6);
+        totalEmissiveRadiance += diffuseColor.rgb * uTransCol * backLit * uTransAmt * ${amount.toFixed(3)};`);
+  };
+  mat.customProgramCacheKey = () => 'tr' + key;
+  return mat;
+}
+function revealing(mat, key) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = U.uTime;
+    sh.vertexShader = 'attribute float aReveal; varying float vReveal;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vReveal = aReveal;');
+    sh.fragmentShader = 'uniform float uTime; varying float vReveal;\n' +
+      sh.fragmentShader.replace('void main() {', 'void main() {\n if (vReveal > uTime) discard;');
+  };
+  mat.customProgramCacheKey = () => 'rv' + key;
+  return mat;
+}
+
+/* ---------- textures: leaf veins ---------- */
+function veinTexture(base, vein, sideCount, curve) {
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, S, S);
+  // subtle mottling
+  for (let i = 0; i < 900; i++) {
+    g.fillStyle = `rgba(${rand() < .5 ? '255,255,255' : '0,0,0'},${rr(.01, .035)})`;
+    g.beginPath(); g.arc(rr(0, S), rr(0, S), rr(2, 14), 0, 7); g.fill();
+  }
+  g.strokeStyle = vein; g.lineCap = 'round';
+  g.lineWidth = 3.2; g.beginPath(); g.moveTo(S / 2, S); g.lineTo(S / 2, 0); g.stroke();
+  g.lineWidth = 1.4;
+  for (let i = 1; i <= sideCount; i++) {
+    const y = S - (i / (sideCount + 1)) * S;
+    for (const sgn of [-1, 1]) {
+      g.beginPath(); g.moveTo(S / 2, y);
+      g.quadraticCurveTo(S / 2 + sgn * S * .22, y - S * curve * .5, S / 2 + sgn * S * .48, y - S * curve);
+      g.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
+/* ---------- petal / leaf geometry ---------- */
+function petalGeometry(o) {
+  const { len = 1, width = .9, cup = .3, bend = .1, curl = 0, ruffle = .02, rows = 12, cols = 10,
+    shape = 'rose', seed = rand() * 100, colorFn = null } = o;
+  const pos = [], uv = [], col = [], idx = [];
+  for (let j = 0; j <= rows; j++) {
+    const t = j / rows;
+    let hw;
+    if (shape === 'rose') hw = Math.max(Math.sqrt(Math.max(0, 1 - Math.pow((t - .56) / .58, 2))), .07);
+    else if (shape === 'round') hw = Math.sqrt(Math.max(0, 1 - Math.pow((t - .5) / .5, 2)));
+    else if (shape === 'floret') hw = Math.pow(Math.sin(Math.PI * Math.min(t * .95 + .05, 1)), .75) * (1 - .15 * t);
+    else hw = Math.pow(Math.sin(Math.PI * t), 1.15) * (1 - .25 * t); // lance
+    for (let i = 0; i <= cols; i++) {
+      const s = i / cols * 2 - 1, w = hw * width * .5;
+      const x = s * w;
+      let y = len * t;
+      if (shape === 'rose') { y -= len * .2 * s * s * Math.pow(t, 2.5); y -= len * .03 * Math.exp(-s * s * 30) * Math.pow(t, 4); }
+      let z = cup * s * s * w + bend * len * t * t - curl * len * Math.pow(Math.max(0, t - .5), 2) * (1 + .8 * s * s);
+      z += ruffle * len * (Math.sin(s * 7 + seed) * Math.pow(t, 2.5) + .5 * Math.sin(t * 9 + seed * 1.7) * s * s);
+      pos.push(x, y, z); uv.push((s + 1) / 2, t);
+      const c = colorFn ? colorFn(t, s) : [1, 1, 1]; col.push(c[0], c[1], c[2]);
+    }
+  }
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const a = j * (cols + 1) + i, b = a + 1, c = a + cols + 1, d = c + 1;
+    idx.push(a, b, c, b, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+
+/* ---------- materials ---------- */
+const petalMat = translucent(new THREE.MeshPhysicalMaterial({
+  vertexColors: true, roughness: .62, sheen: .7, sheenRoughness: .45, sheenColor: C('#fff4ee'),
+  side: THREE.DoubleSide, envMapIntensity: .5
+}), .4, 'petal');
+const floretMat = translucent(new THREE.MeshPhysicalMaterial({
+  vertexColors: true, roughness: .66, sheen: .6, sheenRoughness: .5, sheenColor: C('#ffffff'),
+  side: THREE.DoubleSide, envMapIntensity: .45
+}), .5, 'floret');
+const eucTex = veinTexture('#c9d4cd', 'rgba(235,240,230,.55)', 6, .28);
+const greenTex = veinTexture('#8fa982', 'rgba(205,225,170,.55)', 8, .2);
+const eucMat = translucent(new THREE.MeshPhysicalMaterial({
+  map: eucTex, bumpMap: eucTex, bumpScale: 1.2, color: C('#8aa197'), roughness: .72,
+  sheen: .9, sheenColor: C('#d9e6df'), sheenRoughness: .6, side: THREE.DoubleSide, envMapIntensity: .4
+}), .4, 'euc');
+const greenMat = translucent(new THREE.MeshPhysicalMaterial({
+  map: greenTex, bumpMap: greenTex, bumpScale: 1.5, color: C('#55744a'), roughness: .5,
+  clearcoat: .25, clearcoatRoughness: .5, side: THREE.DoubleSide, envMapIntensity: .5
+}), .6, 'green');
+const sepalMat = new THREE.MeshStandardMaterial({ color: C('#4f6b3f'), roughness: .6, side: THREE.DoubleSide });
+const stemMat = revealing(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55, envMapIntensity: .5 }), 'stem');
+const stemDepth = revealing(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), 'stemdepth');
+const babyMat = new THREE.MeshPhysicalMaterial({ color: C('#fbf7f0'), roughness: .8, sheen: .6, sheenColor: C('#ffffff'),
+  emissive: C('#2a2320'), envMapIntensity: .5 });
+const ribbonMat = new THREE.MeshPhysicalMaterial({ color: C('#e3cba4'), roughness: .3, metalness: .08,
+  sheen: 1, sheenColor: C('#fff1d8'), sheenRoughness: .25, clearcoat: .35, clearcoatRoughness: .3,
+  side: THREE.DoubleSide, envMapIntensity: .9, transparent: true, opacity: 0 });
+
+/* ---------- palettes ---------- */
+const ROSE = {
+  ivory: { inner: C('#e3c49a'), mid: C('#f4e4cd'), edge: C('#fff9f0') },
+  blush: { inner: C('#d4848e'), mid: C('#efbcbc'), edge: C('#fbe5df') },
+  hero:  { inner: C('#d98a96'), mid: C('#f0b3b8'), edge: C('#fcdfd9') }
+};
+const HYD = {
+  pink: { florets: ['#f1b3c3', '#f6c8d3', '#e8a6bf', '#f9dce3', '#dcb0d0', '#f3bfcf'].map(C), heart: C('#3a2329') },
+  blue: { florets: ['#a8c1ea', '#bccff0', '#c5c0ea', '#d7e3f7', '#9bb3e0', '#b4c8ee'].map(C), heart: C('#222a3c') }
+};
+const tmpC = new THREE.Color();
+function roseColor(pal, t, k) {
+  tmpC.lerpColors(pal.inner, pal.mid, smooth(clamp(t / .55)));
+  tmpC.lerp(pal.edge, smooth(prog(t, .45, 1)));
+  const ao = lerp(.5, 1, smooth(clamp(t / .42))) * lerp(.84, 1, k);
+  return [tmpC.r * ao, tmpC.g * ao, tmpC.b * ao];
+}
+
+/* ---------- scene graph ---------- */
+const bouquet = new THREE.Group();          // rotates in the reveal
+const tilt = new THREE.Group(); tilt.rotation.x = .1; bouquet.add(tilt);
+scene.add(bouquet);
+const flowers = [];        // {head, kind, start, bloom:[a,b], update(t), radius, baseQuat, phase, hero}
+const hitProxies = [];
+const stemGeos = [];
+const BIND_Y = -0.36, BOTTOM_Y = -1.0, DOME = 0.34;
+const dirOf = (thDeg, phDeg) => { const th = deg(thDeg), ph = deg(phDeg); return V(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)); };
+
+function addStem(points, radius, color, revealStart, revealDur, radial = 6, segs = 48) {
+  const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal');
+  const g = new THREE.TubeGeometry(curve, segs, radius, radial, false);
+  const n = g.attributes.position.count, rev = new Float32Array(n), col = new Float32Array(n * 3);
+  const c0 = C(color), c1 = c0.clone().multiplyScalar(.55);
+  for (let v = 0; v < n; v++) {
+    const u = Math.floor(v / (radial + 1)) / segs;
+    rev[v] = revealStart + u * revealDur;
+    tmpC.lerpColors(c1, c0, smooth(clamp(u * 1.6)));
+    col[v * 3] = tmpC.r; col[v * 3 + 1] = tmpC.g; col[v * 3 + 2] = tmpC.b;
+  }
+  g.setAttribute('aReveal', new THREE.BufferAttribute(rev, 1));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  stemGeos.push(g);
+  return curve;
+}
+function flowerStem(headPos, headDir, radius, stemR, start, dur) {
+  const ang = Math.atan2(headPos.z, headPos.x) + 1.1;   // hand-tied spiral: stems cross
+  const spread = Math.hypot(headPos.x, headPos.z) / DOME;
+  const bot = V(Math.cos(ang) * .085 * spread + rr(-.01, .01), BOTTOM_Y + rr(-.05, .03), Math.sin(ang) * .085 * spread);
+  const bind = V(Math.cos(ang - .9) * .03 * spread, BIND_Y, Math.sin(ang - .9) * .03 * spread);
+  const base = headPos.clone().addScaledVector(headDir, -radius * .55);
+  const mid = bind.clone().lerp(base, .5).add(V(0, -.02, 0)).multiplyScalar(1).add(headDir.clone().multiplyScalar(-.03));
+  addStem([bot, bot.clone().lerp(bind, .5), bind, mid, base], stemR, '#5d7a45', start, dur);
+}
+function orientHead(head, dir, roll) {
+  head.quaternion.setFromUnitVectors(V(0, 1, 0), dir);
+  head.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), roll));
+}
+function addProxy(flower) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(flower.radius * 1.05, 10, 8), new THREE.MeshBasicMaterial({ visible: false }));
+  m.position.y = flower.kind === 'rose' ? flower.radius * .35 : 0;
+  m.userData.flower = flower; flower.head.add(m); hitProxies.push(m);
+}
+
+/* ---------- rose ---------- */
+function makeRose({ radius, palette, openness = 1, detail = 1 }) {
+  const head = new THREE.Group();
+  const n = Math.round(rr(26, 33)), petals = [];
+  for (let i = 0; i < n; i++) {
+    const k = i / (n - 1);
+    const phi = i * 2.39996 + rr(-.15, .15);
+    const len = radius * lerp(.5, 1.12, Math.pow(k, .6)) * rr(.92, 1.08);
+    const width = len * lerp(.85, 1.3, k) * rr(.9, 1.1);
+    const geo = petalGeometry({ len, width, rows: Math.round(12 * detail), cols: Math.round(10 * detail), cup: lerp(1.15, .45, k), bend: lerp(.55, .12, k), curl: lerp(0, .7, k * k) * openness,
+      ruffle: .025, shape: 'rose', colorFn: t => roseColor(palette, t, k) });
+    const mesh = new THREE.Mesh(geo, petalMat); mesh.castShadow = mesh.receiveShadow = true;
+    const pivot = new THREE.Object3D();
+    const r = radius * lerp(.03, .2, k);
+    pivot.position.set(Math.cos(phi) * r, -radius * .22 * k * k, Math.sin(phi) * r);
+    pivot.rotation.order = 'YXZ';
+    pivot.rotation.y = Math.atan2(-Math.cos(phi), -Math.sin(phi));
+    pivot.rotation.z = rr(-.08, .08);
+    pivot.add(mesh); head.add(pivot);
+    const closed = lerp(-.24, .04, k) + rr(-.02, .02);
+    const open = lerp(.05, 1.3, Math.pow(k, 1.15)) * openness + rr(-.07, .07);
+    petals.push({ pivot, closed, open, delay: 1 - k });
+    pivot.rotation.x = -closed;
+  }
+  // sepals + receptacle
+  for (let i = 0; i < 5; i++) {
+    const g = petalGeometry({ len: radius * .75, width: radius * .22, cup: .2, bend: -.1, shape: 'lance', ruffle: .01 });
+    const m = new THREE.Mesh(g, sepalMat); const p = new THREE.Object3D();
+    p.rotation.order = 'YXZ'; const phi = i / 5 * Math.PI * 2 + rr(-.2, .2);
+    p.rotation.y = Math.atan2(-Math.cos(phi), -Math.sin(phi)); p.rotation.x = -rr(1.9, 2.4);
+    p.position.y = -radius * .28; p.add(m); head.add(p);
+  }
+  const rec = new THREE.Mesh(new THREE.SphereGeometry(radius * .2, 12, 8), sepalMat);
+  rec.scale.y = .8; rec.position.y = -radius * .3; head.add(rec);
+  return {
+    head, petals,
+    setBloom(p) {
+      for (const pt of petals) {
+        const q = easeInOut(clamp((p - pt.delay * .55) / .45));
+        pt.pivot.rotation.x = -lerp(pt.closed, pt.open, q);
+      }
+    }
+  };
+}
+
+/* ---------- hydrangea ---------- */
+const floretGeos = [0, 1, 2].map(v => {
+  const parts = [], nP = v === 2 ? 5 : 4;
+  for (let i = 0; i < nP; i++) {
+    const g = petalGeometry({ len: 1, width: rr(.85, 1.05), cup: .25, bend: .18, shape: 'floret', rows: 6, cols: 6, ruffle: .04,
+      colorFn: t => { tmpC.lerpColors(C('#dfe8cc'), C('#ffffff'), smooth(clamp(t * 2.2))); return [tmpC.r, tmpC.g, tmpC.b]; } });
+    g.rotateX(-Math.PI / 2); g.rotateY(i / nP * Math.PI * 2 + rr(-.15, .15)); g.translate(0, 0, 0);
+    parts.push(g);
+  }
+  return mergeGeometries(parts);
+});
+function makeHydrangea({ radius, palette, count }) {
+  const head = new THREE.Group();
+  const heart = new THREE.Mesh(new THREE.IcosahedronGeometry(radius * .8, 3),
+    new THREE.MeshStandardMaterial({ color: palette.heart, roughness: .95 }));
+  head.add(heart);
+  const cap = deg(118), cosMin = Math.cos(cap);
+  const per = [[], [], []];
+  for (let i = 0; i < count; i++) {
+    const ct = 1 - (i + .5) / count * (1 - cosMin), st = Math.sqrt(1 - ct * ct), ph = i * 2.39996;
+    const n = V(st * Math.cos(ph), ct, st * Math.sin(ph));
+    const depth = rr(.9, 1.03);
+    const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), n.clone().add(V(rr(-.25, .25), rr(-.25, .25), rr(-.25, .25))).normalize());
+    q.multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), rr(0, 6.28)));
+    const col = palette.florets[Math.floor(rand() * palette.florets.length)].clone()
+      .multiplyScalar(lerp(.62, 1.04, (depth - .9) / .13));
+    const th = Math.acos(ct) / cap;
+    per[Math.floor(rand() * 3)].push({ p: n.multiplyScalar(radius * depth), q, s: radius * rr(.13, .17), col, delay: th * .55 + rr(0, .35) });
+  }
+  const meshes = per.map((list, v) => {
+    const im = new THREE.InstancedMesh(floretGeos[v], floretMat, list.length);
+    im.castShadow = true; im.receiveShadow = true;
+    list.forEach((d, i) => im.setColorAt(i, d.col));
+    im.userData.list = list; head.add(im); return im;
+  });
+  const M = new THREE.Matrix4(), S = new THREE.Vector3();
+  return {
+    head,
+    setBloom(p) {
+      heart.scale.setScalar(Math.max(1e-4, smooth(clamp(p * 1.25))));
+      for (const im of meshes) {
+        im.userData.list.forEach((d, i) => {
+          const q = clamp((p - d.delay * .62) / .38);
+          const s = d.s * Math.max(1e-4, backOut(q));
+          M.compose(d.p, d.q, S.set(s, s, s)); im.setMatrixAt(i, M);
+        });
+        im.instanceMatrix.needsUpdate = true;
+      }
+    }
+  };
+}
+
+/* ---------- instanced "growers" (leaves, baby's breath) ---------- */
+function makeGrower(geo, mat, items, opts = {}) {
+  const im = new THREE.InstancedMesh(geo, mat, items.length);
+  im.castShadow = opts.shadow !== false; im.receiveShadow = true;
+  items.forEach((d, i) => { if (d.col) im.setColorAt(i, d.col); });
+  const M = new THREE.Matrix4(), S = new THREE.Vector3();
+  let lo = Infinity, hi = -Infinity;
+  for (const d of items) { lo = Math.min(lo, d.t); hi = Math.max(hi, d.t + d.dur); }
+  let lastState = null;
+  return {
+    mesh: im,
+    update(t) {
+      const state = t < lo ? 'pre' : t > hi ? 'post' : 'mid';
+      if (state !== 'mid' && state === lastState) return;
+      lastState = state;
+      items.forEach((d, i) => {
+        const s = d.s * Math.max(1e-4, backOut(prog(t, d.t, d.t + d.dur)));
+        M.compose(d.p, d.q, S.set(s, s, s)); im.setMatrixAt(i, M);
+      });
+      im.instanceMatrix.needsUpdate = true;
+    }
+  };
+}
+function leafQuat(tangent, side, up, twist) {
+  const y = tangent.clone().multiplyScalar(.45).add(side).normalize();
+  let z = up.clone().addScaledVector(y, -up.dot(y)).normalize();
+  const x = new THREE.Vector3().crossVectors(y, z).normalize();
+  z = new THREE.Vector3().crossVectors(x, y).normalize();
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  return q.multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), twist));
+}
+
+/* ==========================================================================
+   Build the procedural bouquet
+   ========================================================================== */
+function buildBouquet() {
+  const center = V(0, 0, 0);
+  const layout = [
+    // kind, theta, phi, radius, palette
+    ['rose', 13, 100, .118, 'hero', true],
+    ['hyd', 38, 28, .165, 'blue'], ['hyd', 42, 150, .17, 'pink'], ['hyd', 31, 243, .16, 'blue'],
+    ['hyd', 42, 322, .165, 'pink'], ['hyd', 66, 88, .15, 'pink'], ['hyd', 16, 285, .14, 'blue'],
+    ['hyd', 72, 205, .145, 'blue'], ['hyd', 74, 345, .14, 'blue'],
+    ['rose', 26, 52, .095, 'ivory'], ['rose', 30, 128, .1, 'blush'], ['rose', 54, 56, .092, 'blush'],
+    ['rose', 57, 124, .1, 'ivory'], ['rose', 58, 196, .095, 'ivory'], ['rose', 56, 4, .09, 'ivory'],
+    ['rose', 47, 287, .095, 'blush'], ['rose', 30, 196, .088, 'blush'], ['rose', 22, 345, .09, 'ivory'],
+    ['rose', 75, 160, .088, 'blush'], ['rose', 77, 22, .09, 'blush'], ['rose', 70, 250, .09, 'ivory'],
+    ['rose', 76, 120, .085, 'ivory']
+  ];
+  const heroDir = dirOf(13, 100);
+  layout.forEach(([kind, th, ph, radius, pal, hero], idx) => {
+    const dir = dirOf(th + rr(-3, 3), ph + rr(-4, 4));
+    const pos = center.clone().addScaledVector(dir, DOME * (kind === 'rose' ? (hero ? 1.1 : 1.03) : .96) + rr(-.012, .012));
+    const faceDir = dir.clone().multiplyScalar(.82).add(V(0, .3, 0)).normalize();
+    const start = hero ? T.hero : T.bouquetFrom + .35 + Math.acos(dir.dot(heroDir)) * 2.1 + rr(0, .5);
+    const built = kind === 'rose'
+      ? makeRose({ radius, palette: ROSE[pal], openness: hero ? 1 : rr(.75, 1.05), detail: hero ? 1.6 : 1 })
+      : makeHydrangea({ radius, palette: HYD[pal], count: Math.round(radius * 2000) });
+    built.head.position.copy(pos);
+    orientHead(built.head, faceDir, rr(0, 6.28));
+    tilt.add(built.head);
+    const f = {
+      kind, hero: !!hero, radius, head: built.head, setBloom: built.setBloom, start,
+      bloom: hero ? T.heroBloom : [start + .25, start + (kind === 'rose' ? 3.4 : 4.0)],
+      baseQuat: built.head.quaternion.clone(), phase: rr(0, 6.28), pulse: -10
+    };
+    flowers.push(f); addProxy(f);
+    flowerStem(pos, faceDir, radius, kind === 'rose' ? .0065 : .0085, hero ? T.hero - 1.6 : start - 1.3, hero ? 1.6 : 1.2);
+  });
+
+  /* eucalyptus (silver-dollar) — round leaves on arching stems */
+  const eucLeaf = petalGeometry({ len: 1, width: .95, cup: .18, bend: .06, shape: 'round', rows: 10, cols: 10, ruffle: .015 });
+  const eucItems = [];
+  const eucCount = 11;
+  for (let e = 0; e < eucCount; e++) {
+    const ph = e / eucCount * 360 + rr(-12, 12), th = rr(70, 102);
+    const dir = dirOf(th, ph);
+    const start = T.bouquetFrom + 1.4 + rr(0, 3.2), dur = 2.2;
+    const p0 = V(dir.x * .06, BIND_Y + .04, dir.z * .06);
+    const p1 = dir.clone().multiplyScalar(DOME * .7).add(V(0, -.02, 0));
+    const p2 = dir.clone().multiplyScalar(DOME * 1.25).add(V(0, rr(-.12, .02), 0));
+    const p3 = dir.clone().multiplyScalar(DOME * 1.6).add(V(0, rr(-.26, -.08), 0));
+    const curve = addStem([p0, p1, p2, p3], .0032, '#7d6f5e', start, dur, 5, 40);
+    const pairs = 9;
+    for (let k = 0; k < pairs; k++) {
+      const u = .32 + k / pairs * .66;
+      const p = curve.getPointAt(u), tg = curve.getTangentAt(u);
+      const side = new THREE.Vector3().crossVectors(tg, V(0, 1, 0)).normalize();
+      const up = new THREE.Vector3().crossVectors(side, tg).normalize();
+      const size = lerp(.062, .028, k / pairs) * rr(.85, 1.15);
+      for (const sg of [-1, 1]) {
+        eucItems.push({ p: p.clone(), q: leafQuat(tg, side.clone().multiplyScalar(sg), up, rr(-.4, .4)), s: size,
+          t: start + u * dur - .15, dur: .9, col: tmpC.setHSL(rr(.38, .44), rr(.08, .16), rr(.52, .62)).clone().convertSRGBToLinear() });
+      }
+    }
+  }
+  /* delicate greenery — slender lance leaves */
+  const lanceLeaf = petalGeometry({ len: 1, width: .32, cup: .3, bend: .1, curl: .1, shape: 'lance', rows: 12, cols: 6, ruffle: .01 });
+  const greenItems = [];
+  for (let e = 0; e < 14; e++) {
+    const ph = e / 14 * 360 + rr(-10, 10) + 13, th = rr(48, 96);
+    const dir = dirOf(th, ph);
+    const start = T.bouquetFrom + 1.8 + rr(0, 3), dur = 1.8;
+    const p0 = dir.clone().multiplyScalar(DOME * .55).add(V(0, -.05, 0));
+    const p1 = dir.clone().multiplyScalar(DOME * 1.05);
+    const p2 = dir.clone().multiplyScalar(DOME * 1.38).add(V(0, rr(-.05, .08), 0));
+    const curve = addStem([p0, p1, p2], .0022, '#4c6b3a', start, dur, 4, 24);
+    const nL = 7;
+    for (let k = 0; k < nL; k++) {
+      const u = .35 + k / nL * .62;
+      const p = curve.getPointAt(u), tg = curve.getTangentAt(u);
+      const side = new THREE.Vector3().crossVectors(tg, V(0, 1, 0)).normalize().multiplyScalar(k % 2 ? 1 : -1);
+      const up = new THREE.Vector3().crossVectors(side, tg).normalize();
+      greenItems.push({ p, q: leafQuat(tg, side, up, rr(-.3, .3)), s: lerp(.085, .05, k / nL) * rr(.8, 1.2),
+        t: start + u * dur - .1, dur: .8, col: tmpC.setHSL(rr(.25, .3), rr(.25, .4), rr(.42, .55)).clone().convertSRGBToLinear() });
+    }
+  }
+  /* baby's breath — airy sprays of tiny blossoms */
+  const babyItems = [];
+  for (let b = 0; b < 30; b++) {
+    const dir = dirOf(rr(6, 80), rr(0, 360));
+    const start = T.bouquetFrom + 2.6 + rr(0, 3.4);
+    const base = dir.clone().multiplyScalar(DOME * .82);
+    const tip = dir.clone().multiplyScalar(DOME * rr(1.2, 1.42)).add(V(rr(-.03, .03), rr(0, .05), rr(-.03, .03)));
+    addStem([base, base.clone().lerp(tip, .5).add(V(rr(-.01, .01), .01, rr(-.01, .01))), tip], .0011, '#7f9467', start, .9, 3, 10);
+    const branches = Math.round(rr(4, 7));
+    for (let k = 0; k < branches; k++) {
+      const bt = tip.clone().add(V(rr(-.045, .045), rr(-.01, .045), rr(-.045, .045)));
+      addStem([tip.clone().lerp(base, .25), bt], .0008, '#7f9467', start + .6, .5, 3, 4);
+      const nF = Math.round(rr(5, 9));
+      for (let f = 0; f < nF; f++) {
+        const fp = bt.clone().add(V(rr(-.011, .011), rr(-.007, .011), rr(-.011, .011)));
+        babyItems.push({ p: fp, q: new THREE.Quaternion().random(), s: rr(.0042, .0068),
+          t: start + 1.0 + rr(0, .6), dur: .6 });
+      }
+    }
+  }
+  const growers = [
+    makeGrower(eucLeaf, eucMat, eucItems),
+    makeGrower(lanceLeaf, greenMat, greenItems),
+    makeGrower(new THREE.IcosahedronGeometry(1, 1), babyMat, babyItems, { shadow: false })
+  ];
+  growers.forEach(g => tilt.add(g.mesh));
+
+  /* merged stems with a growth reveal */
+  const stems = new THREE.Mesh(mergeGeometries(stemGeos), stemMat);
+  stems.customDepthMaterial = stemDepth; stems.castShadow = stems.receiveShadow = true;
+  tilt.add(stems);
+
+  return { growers, ribbon: makeRibbon() };
+}
+
+/* ---------- silk ribbon ---------- */
+function ribbonStrip(points, width, widthDir, segs = 64, closed = false) {
+  const curve = new THREE.CatmullRomCurve3(points, closed, 'centripetal');
+  const pos = [], idx = [], uv = [];
+  for (let i = 0; i <= segs; i++) {
+    const u = i / segs, p = curve.getPointAt(u), tg = curve.getTangentAt(u);
+    let w = widthDir(u, tg, p).normalize();
+    w.addScaledVector(tg, -w.dot(tg)).normalize();
+    const hw = width * .5 * (1 + .06 * Math.sin(u * 20));
+    pos.push(p.x - w.x * hw, p.y - w.y * hw, p.z - w.z * hw, p.x + w.x * hw, p.y + w.y * hw, p.z + w.z * hw);
+    uv.push(0, u, 1, u);
+    if (i < segs) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function makeRibbon() {
+  const grp = new THREE.Group();
+  const y = BIND_Y - .04, R = .05, W = .045;
+  const parts = [];
+  // wraps around the stems
+  for (let w = 0; w < 2; w++) {
+    const pts = []; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; pts.push(V(Math.cos(a) * (R + w * .003), y - w * .03 + Math.sin(a) * .006, Math.sin(a) * (R + w * .003))); }
+    parts.push(ribbonStrip(pts, W, () => V(0, 1, 0), 80, true));
+  }
+  const Cn = V(0, y - .012, R + .008);
+  const tiltA = deg(58), nrm = V(0, -Math.sin(tiltA), Math.cos(tiltA));
+  for (const sx of [-1, 1]) {      // loops
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const a = i / 24 * Math.PI * 2;
+      pts.push(Cn.clone().add(V(sx * .085 * (1 - Math.cos(a)) * .5 * (1 + .25 * Math.sin(a)), .05 * Math.sin(a) * Math.cos(tiltA) + .012 * (1 - Math.cos(a)), .05 * Math.sin(a) * Math.sin(tiltA) + .015 * (1 - Math.cos(a)))));
+    }
+    parts.push(ribbonStrip(pts, W * .92, (u) => nrm.clone().add(V(sx * .2 * Math.sin(u * 6.28), 0, 0)), 72));
+  }
+  for (const sx of [-1, 1]) {      // tails
+    const pts = [Cn.clone(), Cn.clone().add(V(sx * .025, -.07, .012)), Cn.clone().add(V(sx * .055, -.16, .02)), Cn.clone().add(V(sx * .07, -.25, .006))];
+    parts.push(ribbonStrip(pts, W * .85, (u, tg) => new THREE.Vector3().crossVectors(tg, V(0, 0, 1)).add(V(0, 0, .3 * Math.sin(u * 4))), 48));
+  }
+  for (const g of parts) { const m = new THREE.Mesh(g, ribbonMat); m.castShadow = true; m.receiveShadow = true; grp.add(m); }
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(.019, 20, 14), ribbonMat);
+  knot.scale.set(1.2, .9, .7); knot.position.copy(Cn).add(V(0, 0, .004)); knot.castShadow = true; grp.add(knot);
+  tilt.add(grp);
+  return grp;
+}
+
+/* ==========================================================================
+   Optional: use bouquet.glb from Blender when it sits beside this page
+   ========================================================================== */
+async function tryGLB() {
+  try {
+    const head = await fetch(CONFIG.glb, { method: 'HEAD' });
+    if (!head.ok || /text\/html/.test(head.headers.get('content-type') || '')) return null;
+    const loader = new GLTFLoader();
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/libs/draco/gltf/');
+    loader.setDRACOLoader(draco);
+    return await loader.loadAsync(CONFIG.glb);
+  } catch (e) { return null; }
+}
+let mixer = null, glbDuration = 0;
+function useGLB(gltf) {
+  const root = gltf.scene;
+  root.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = o.receiveShadow = true;
+      const m = o.material, name = (m.name || '').toLowerCase();
+      if (m.anisotropy) m.anisotropy = 0;             // avoids NaN shading on some GPUs
+      if (m.sheen) m.sheen = Math.min(m.sheen, .35);
+      if (/petal/.test(name)) { o.material = petalMat; }
+      else if (/floret/.test(name)) { o.material = floretMat; }
+      else if (/eucalyptus/.test(name)) { m.side = THREE.DoubleSide; }
+      else if (/ribbon/.test(name)) { m.side = THREE.DoubleSide; }
+    }
+    const ud = o.userData || {};
+    if (ud.kind === 'rose' || ud.kind === 'hydrangea') {
+      const f = { kind: ud.kind === 'rose' ? 'rose' : 'hyd', hero: !!ud.hero, radius: ud.radius || .1, head: o,
+        setBloom: () => {}, start: 0, bloom: [0, 0], baseQuat: o.quaternion.clone(), phase: rr(0, 6.28), pulse: -10, glb: true };
+      flowers.push(f); addProxy(f);
+    }
+  });
+  bouquet.add(root);
+  if (gltf.animations.length) {
+    mixer = new THREE.AnimationMixer(root);
+    for (const clip of gltf.animations) { mixer.clipAction(clip).play(); glbDuration = Math.max(glbDuration, clip.duration); }
+  }
+}
+
+/* ==========================================================================
+   Lights & atmosphere
+   ========================================================================== */
+const key = new THREE.DirectionalLight(C('#ffd6a8'), 0);
+key.position.set(-2.2, 2.9, 1.9); key.castShadow = true;
+key.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+Object.assign(key.shadow.camera, { left: -1.1, right: 1.1, top: 1.1, bottom: -1.4, near: .5, far: 8 });
+key.shadow.bias = -.0004; key.shadow.normalBias = .012;
+scene.add(key);
+const fill = new THREE.DirectionalLight(C('#ff9fb7'), 0); fill.position.set(2.4, .2, 1.6); scene.add(fill);
+const rim = new THREE.DirectionalLight(C('#ffc777'), 0); rim.position.set(.6, 1.6, -2.6); scene.add(rim);
+const under = new THREE.HemisphereLight(C('#3a2622'), C('#0a0606'), 0); scene.add(under);
+const heroSpot = new THREE.SpotLight(C('#ffe4c8'), 0, 0, .26, .85, 0);
+heroSpot.castShadow = true; heroSpot.shadow.mapSize.set(1024, 1024); heroSpot.shadow.bias = -.0005;
+scene.add(heroSpot, heroSpot.target);
+const sweep = new THREE.PointLight(C('#ffe2bf'), 0, 0, 0); scene.add(sweep);
+
+/* soft volumetric beams */
+const beamMat = (color) => new THREE.ShaderMaterial({
+  uniforms: { uColor: { value: C(color) }, uOpacity: { value: 0 }, uLen: { value: 1 } },
+  vertexShader: `varying float vH; varying vec3 vN; varying vec3 vV; uniform float uLen;
+    void main(){ vH = position.y / uLen + .5; vec4 mv = modelViewMatrix * vec4(position,1.);
+      vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying float vH; varying vec3 vN; varying vec3 vV; uniform vec3 uColor; uniform float uOpacity;
+    void main(){ float f = pow(abs(dot(vN, vV)), 2.2); float a = smoothstep(0., .55, 1. - vH) * smoothstep(0., .5, vH) * f;
+      gl_FragColor = vec4(uColor, a * uOpacity); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+});
+function beam(len, rad, color) {
+  const m = beamMat(color); m.uniforms.uLen.value = len;
+  const mesh = new THREE.Mesh(new THREE.ConeGeometry(rad, len, 48, 1, true), m);
+  mesh.geometry.translate(0, -len / 2, 0); m.uniforms.uLen.value = len;   // apex at origin, pointing -y
+  mesh.material.vertexShader = mesh.material.vertexShader.replace('position.y / uLen + .5', '1. + position.y / uLen');
+  return mesh;
+}
+const heroBeam = beam(2.0, .42, '#ffd9b4'); scene.add(heroBeam);
+const keyBeam = beam(4.4, 1.25, '#ffcf9e'); scene.add(keyBeam);
+function aimBeam(b, from, to) { b.position.copy(from); b.quaternion.setFromUnitVectors(V(0, -1, 0), to.clone().sub(from).normalize()); }
+
+/* floating dust */
+const DUST = isTouch ? 380 : 620;
+const dustGeo = new THREE.BufferGeometry();
+{
+  const p = new Float32Array(DUST * 3), s = new Float32Array(DUST), ph = new Float32Array(DUST);
+  for (let i = 0; i < DUST; i++) {
+    p[i * 3] = rr(-2.4, 2.4); p[i * 3 + 1] = rr(-1.6, 1.8); p[i * 3 + 2] = rr(-1.8, 2.6);
+    s[i] = rand() < .06 ? rr(10, 22) : rr(1.4, 4.2); ph[i] = rand();
+  }
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  dustGeo.setAttribute('aSize', new THREE.BufferAttribute(s, 1));
+  dustGeo.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+}
+const dustMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 }, uPR: { value: pixelRatio }, uOpacity: { value: 1 }, uColor: { value: C('#ffd2a0') } },
+  vertexShader: `attribute float aSize; attribute float aPhase; uniform float uTime; uniform float uPR; varying float vA;
+    void main(){ vec3 p = position;
+      float sp = .015 + .03 * fract(aPhase * 7.31);
+      p.y = mod(p.y + uTime * sp + 1.6, 3.4) - 1.6;
+      p.x += sin(uTime * .11 + aPhase * 40.) * .18 + uTime * .006;
+      p.z += cos(uTime * .09 + aPhase * 23.) * .12;
+      vec4 mv = modelViewMatrix * vec4(p, 1.);
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = aSize * uPR * (2.2 / max(.2, -mv.z));
+      float tw = .5 + .5 * sin(uTime * (.7 + aPhase * 1.3) + aPhase * 60.);
+      vA = (.25 + .75 * tw) * (aSize > 9. ? .16 : 1.) * smoothstep(.15, .9, -mv.z); }`,
+  fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying float vA;
+    void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, 0., d); a *= a;
+      gl_FragColor = vec4(uColor * 1.6, a * vA * uOpacity); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+const dust = new THREE.Points(dustGeo, dustMat); dust.frustumCulled = false; scene.add(dust);
+
+/* sparkle burst when a flower is tapped */
+const SPARK = 46;
+const sparkGeo = new THREE.BufferGeometry();
+sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SPARK * 3), 3));
+sparkGeo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(SPARK).map(() => rr(2, 5)), 1));
+sparkGeo.setAttribute('aPhase', new THREE.BufferAttribute(new Float32Array(SPARK).map(() => rand()), 1));
+const sparkMat = new THREE.ShaderMaterial({
+  uniforms: { uPR: { value: pixelRatio }, uOpacity: { value: 0 }, uColor: { value: C('#ffe0c0') } },
+  vertexShader: `attribute float aSize; uniform float uPR; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.);
+    gl_Position = projectionMatrix * mv; gl_PointSize = aSize * uPR * (1.6 / max(.2, -mv.z)); }`,
+  fragmentShader: `uniform vec3 uColor; uniform float uOpacity; void main(){ float d = length(gl_PointCoord-.5);
+    float a = smoothstep(.5,0.,d); gl_FragColor = vec4(uColor*2., a*a*uOpacity); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+const sparks = new THREE.Points(sparkGeo, sparkMat); sparks.frustumCulled = false; scene.add(sparks);
+const sparkState = { t0: -10, origin: V(0, 0, 0), vel: [] };
+
+/* ==========================================================================
+   Post-processing
+   ========================================================================== */
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(pixelRatio);
+composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), .26, .6, .9);
+composer.addPass(bloom);
+let bokeh = null;
+const additive = [dust, sparks, heroBeam, keyBeam];
+if (!isTouch) {
+  bokeh = new BokehPass(scene, camera, { focus: 2, aperture: .0032, maxblur: .0065 });
+  const orig = bokeh.render.bind(bokeh);
+  bokeh.render = (...a) => { const vis = additive.map(o => o.visible); additive.forEach(o => o.visible = false); orig(...a); additive.forEach((o, i) => o.visible = vis[i]); };
+  composer.addPass(bokeh);
+}
+composer.addPass(new OutputPass());
+const grade = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uFade: { value: 1 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uFade; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
+    void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5;
+      float v = smoothstep(.92, .22, length(d * vec2(1.05, 1.0))); c.rgb *= mix(.55, 1., v);
+      c.rgb = mix(c.rgb, c.rgb * vec3(1.03, .99, .95), .6);
+      c.rgb += (h(vUv * 1000. + fract(uTime) * 91.) - .5) * .022;
+      gl_FragColor = vec4(c.rgb * uFade, 1.); }`
+});
+composer.addPass(grade);
+
+/* ==========================================================================
+   Camera choreography
+   ========================================================================== */
+const controls = new OrbitControls(camera, canvas);
+Object.assign(controls, { enabled: false, enableDamping: true, dampingFactor: .06, enablePan: false, rotateSpeed: .55,
+  zoomSpeed: .7, minDistance: .45, maxDistance: 5.5, minPolarAngle: .15, maxPolarAngle: 2.75, autoRotateSpeed: .45 });
+controls.addEventListener('start', () => { controls.autoRotate = false; $('hint').classList.add('gone'); });
+
+let heroWorld = V(0, .4, .1);
+let shots = [];
+function makeShots() {
+  shots = [
+    { t: 0, target: V(0, .3, 0), dir: V(0, .1, 1), hw: .9, hh: 1.1 },
+    { t: 4.6, target: heroWorld.clone(), dir: V(.42, .38, 1), hw: .3, hh: .3 },
+    { t: 11.0, target: heroWorld.clone().add(V(0, .015, 0)), dir: V(.12, .3, 1), hw: .165, hh: .165 },
+    { t: 15.6, target: V(0, .17, .02), dir: V(-.2, .34, 1), hw: .48, hh: .48 },
+    { t: 17.6, target: V(0, .14, .02), dir: V(-.14, .3, 1), hw: .52, hh: .52 },
+    { t: 25.4, target: V(0, -.34, 0), dir: V(0, .14, 1), hw: .62, hh: .96 }
+  ];
+}
+function pose(s) {
+  const tv = Math.tan(deg(camera.fov) / 2);
+  const dist = Math.max(s.hh / tv, s.hw / (tv * camera.aspect));
+  return { target: s.target, pos: s.target.clone().addScaledVector(s.dir.clone().normalize(), dist) };
+}
+const camTarget = V(0, 0, 0);
+function cameraAt(t) {
+  let i = 0; while (i < shots.length - 2 && t >= shots[i + 1].t) i++;
+  const a = pose(shots[i]), b = pose(shots[i + 1]);
+  const u = easeInOut(prog(t, shots[i].t, shots[i + 1].t));
+  camera.position.lerpVectors(a.pos, b.pos, u);
+  camTarget.lerpVectors(a.target, b.target, u);
+  camera.position.x += Math.sin(t * .31) * .006; camera.position.y += Math.sin(t * .23 + 1) * .005;
+  camera.lookAt(camTarget);
+}
+
+/* ==========================================================================
+   Main timeline
+   ========================================================================== */
+let built = null;
+let timeline = 0, playing = false, interactive = false, clockPrev = performance.now(), wall = 0;
+const tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler();
+const keyTarget = V(0, -.05, 0);
+
+function setLine(id, on) { $(id).classList.toggle('on', on); }
+
+function applyTimeline(t) {
+  U.uTime.value = t;
+  // flowers
+  for (const f of flowers) {
+    if (!f.glb) {
+      const appear = f.hero ? smooth(prog(t, f.start, f.start + 1.2)) : backOut(prog(t, f.start, f.start + .85));
+      const pulse = 1 + .07 * Math.sin(Math.PI * clamp((wall - f.pulse) / .7));
+      f.head.scale.setScalar(Math.max(1e-4, appear) * pulse);
+      f.head.visible = appear > 0.0005;
+      f.setBloom(prog(t, f.bloom[0], f.bloom[1]));
+    } else {
+      const pulse = 1 + .07 * Math.sin(Math.PI * clamp((wall - f.pulse) / .7));
+      if (f.baseScale === undefined) f.baseScale = f.head.scale.x;
+      if (pulse !== 1) f.head.scale.setScalar(f.head.scale.x * pulse);
+    }
+    // gentle sway once open
+    const sw = smooth(prog(t, f.bloom[1] - 1, f.bloom[1] + 2));
+    tmpE.set(Math.sin(wall * .8 + f.phase) * .022 * sw, 0, Math.cos(wall * .63 + f.phase * 1.3) * .022 * sw);
+    if (!f.glb) f.head.quaternion.copy(f.baseQuat).multiply(tmpQ.setFromEuler(tmpE));
+  }
+  if (mixer) mixer.setTime(Math.min(t, glbDuration));
+  if (built) {
+    built.growers.forEach(g => g.update(t));
+    const r = prog(t, T.ribbon[0], T.ribbon[1]);
+    ribbonMat.opacity = smooth(clamp(r * 2.2));
+    ribbonMat.transparent = ribbonMat.opacity < .999;
+    built.ribbon.visible = r > 0;
+    built.ribbon.position.y = (1 - easeOut(r)) * .16 + Math.sin(r * Math.PI) * .006;
+    const rs = lerp(.75, 1, backOut(r)); built.ribbon.scale.set(rs, 1, rs);
+  }
+  // bouquet turn in the reveal
+  if (!interactive && !mixer) bouquet.rotation.y = lerp(-.12, .55, easeInOut(prog(t, T.rotate[0], T.rotate[1])));
+
+  // lights
+  const heroOn = smooth(prog(t, 4.5, 6.6)) * lerp(1, .32, smooth(prog(t, 11.5, 16)));
+  const allOn = smooth(prog(t, 10.4, 15.2));
+  heroSpot.intensity = 3.0 * heroOn;
+  key.intensity = 1.9 * allOn; fill.intensity = .6 * allOn + .3 * heroOn; rim.intensity = 3.0 * allOn;
+  under.intensity = .55 * allOn + .5 * heroOn;
+  scene.environmentIntensity = .05 * heroOn + .2 * allOn;
+  U.uTransAmt.value = .35 + .65 * allOn;
+  heroBeam.material.uniforms.uOpacity.value = .06 * heroOn;
+  keyBeam.material.uniforms.uOpacity.value = .045 * allOn;
+  const sw = prog(t, 17.8, 24.5);
+  sweep.intensity = 2.2 * Math.sin(Math.PI * sw);
+  sweep.position.set(lerp(-1.6, 1.6, sw), .7, 1.4);
+  dustMat.uniforms.uOpacity.value = lerp(.85, 1, allOn);
+
+  // text
+  setLine('l1', t > T.text1In && t < T.text1Out);
+  setLine('l2', t > T.text2);
+  setLine('l3', t > T.text3);
+
+  if (!interactive) cameraAt(t);
+}
+
+function startInteractive() {
+  interactive = true;
+  controls.target.copy(camTarget);
+  controls.enabled = true; controls.autoRotate = true; controls.update();
+  $('ui').classList.add('on');
+}
+
+function play(fromBlack) {
+  timeline = 0; interactive = false; controls.enabled = false;
+  bouquet.rotation.y = mixer ? 0 : -.12;
+  ['l1', 'l2', 'l3'].forEach(id => setLine(id, false));
+  $('ui').classList.remove('on'); hideCard();
+  for (const f of flowers) f.pulse = -10;
+  playing = true;
+  if (fromBlack) $('veil').style.opacity = 0;
+}
+
+/* ---------- interaction: tap a flower ---------- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let down = null, msgBag = [], cardTimer = 0;
+canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || !interactive) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t;
+  down = null;
+  if (moved > 8 || dt > 450) return;
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(hitProxies, false)[0];
+  if (!hit) { hideCard(); return; }
+  const f = hit.object.userData.flower;
+  f.pulse = wall;
+  burst(hit.point);
+  showCard(f, e.clientX, e.clientY);
+});
+function nextMessage(f) {
+  if (f.hero) return CONFIG.heroMessage;
+  if (!msgBag.length) msgBag = CONFIG.messages.slice().sort(() => rand() - .5);
+  return msgBag.pop();
+}
+function showCard(f, x, y) {
+  const card = $('card');
+  $('cardText').textContent = nextMessage(f);
+  card.classList.remove('on');
+  requestAnimationFrame(() => {
+    const w = card.offsetWidth, h = card.offsetHeight;
+    let left = clamp(x - w / 2, 12, innerWidth - w - 12);
+    let top = y - h - 28; if (top < 12) top = y + 28;
+    top = clamp(top, 12, innerHeight - h - 90);
+    card.style.left = left + 'px'; card.style.top = top + 'px';
+    card.classList.add('on');
+  });
+  clearTimeout(cardTimer); cardTimer = setTimeout(hideCard, 6500);
+}
+function hideCard() { $('card').classList.remove('on'); }
+function burst(p) {
+  sparkState.t0 = wall; sparkState.origin.copy(p);
+  sparkState.vel = Array.from({ length: SPARK }, () => V(rr(-1, 1), rr(-.3, 1.2), rr(-1, 1)).normalize().multiplyScalar(rr(.05, .22)));
+}
+function updateSparks() {
+  const a = (wall - sparkState.t0) / 1.6;
+  sparkMat.uniforms.uOpacity.value = a < 1 ? Math.pow(1 - a, 1.5) : 0;
+  if (a >= 1) return;
+  const arr = sparkGeo.attributes.position.array, e = easeOut(clamp(a));
+  for (let i = 0; i < SPARK; i++) {
+    const v = sparkState.vel[i];
+    arr[i * 3] = sparkState.origin.x + v.x * e; arr[i * 3 + 1] = sparkState.origin.y + v.y * e - .05 * a * a; arr[i * 3 + 2] = sparkState.origin.z + v.z * e;
+  }
+  sparkGeo.attributes.position.needsUpdate = true;
+}
+
+$('again').addEventListener('click', () => {
+  $('veil').style.transition = 'opacity .9s ease'; $('veil').style.opacity = 1;
+  $('ui').classList.remove('on'); hideCard();
+  setTimeout(() => { $('veil').style.transition = 'opacity 1.6s ease'; play(true); }, 950);
+});
+
+/* ---------- gate ---------- */
+let gateOpen = false;
+$('gate').addEventListener('click', () => {
+  if (gateOpen) return; gateOpen = true;
+  $('gate').classList.add('gone');
+  play(false);
+});
+
+/* ---------- resize & adaptive quality ---------- */
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  if (interactive) controls.update();
+}
+addEventListener('resize', resize);
+let perf = { frames: 0, acc: 0, level: 0 };
+function adapt(dt) {
+  perf.frames++; perf.acc += dt;
+  if (perf.frames < 90) return;
+  const avg = perf.acc / perf.frames; perf.frames = 0; perf.acc = 0;
+  if (avg > 1 / 26 && perf.level < 3) {
+    perf.level++;
+    if (perf.level === 1 && bokeh) { bokeh.enabled = false; }
+    else if (perf.level <= 2 && pixelRatio > 1) { pixelRatio = Math.max(1, pixelRatio - .5); renderer.setPixelRatio(pixelRatio); composer.setPixelRatio(pixelRatio); dustMat.uniforms.uPR.value = sparkMat.uniforms.uPR.value = pixelRatio; resize(); }
+    else if (perf.level === 3) { renderer.shadowMap.enabled = false; key.castShadow = heroSpot.castShadow = false; }
+  }
+}
+
+/* ---------- frame loop ---------- */
+const HOLD = new URLSearchParams(location.search).has('hold');
+const lightDirW = V(0, 0, 0);
+function frame(now) {
+  const dt = Math.min(.1, (now - clockPrev) / 1000); clockPrev = now; wall += dt;
+  if (HOLD) { /* test hook: frozen timeline */ }
+  else if (playing && !interactive) {
+    timeline += dt;
+    if (timeline >= T.interactive) startInteractive();
+  } else if (interactive) timeline += dt;   // keeps sway & late animations alive
+  applyTimeline(timeline);
+  if (interactive) controls.update();
+  dustMat.uniforms.uTime.value = wall;
+  grade.uniforms.uTime.value = wall;
+  updateSparks();
+  // translucency direction = rim light (view space)
+  lightDirW.copy(rim.position).normalize().transformDirection(camera.matrixWorldInverse);
+  U.uLightDir.value.copy(lightDirW);
+  if (bokeh && bokeh.enabled) {
+    bokeh.uniforms.focus.value = camera.position.distanceTo(interactive ? controls.target : camTarget);
+    bokeh.uniforms.aperture.value = interactive ? .0018 : .0032;
+  }
+  composer.render(dt);
+  adapt(dt);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- fallback (no WebGL) ---------- */
+function showFallback() {
+  const fb = $('fallback'); fb.style.display = 'flex';
+  fb.innerHTML = `<video src="${CONFIG.fallbackVideo}" autoplay playsinline controls></video>`;
+  const vid = fb.querySelector('video');
+  vid.addEventListener('error', () => { fb.innerHTML = `<p>${CONFIG.opening}<br><br>${CONFIG.reveal}<br><br>${CONFIG.signature}</p>`; });
+  $('gate').style.display = 'none';
+}
+
+/* ---------- offline capture hook (used to pre-render the fallback film) ---------- */
+function setupCapture() {
+  document.querySelectorAll('.line,#veil').forEach(el => el.style.transition = 'none');
+  $('gate').style.display = 'none'; $('veil').style.opacity = 0;
+  const fade = (el, o) => { el.style.opacity = o; el.style.filter = `blur(${(1 - o) * 6}px)`; };
+  window.__frame = t => {
+    wall = t; timeline = t; playing = true; interactive = false;
+    applyTimeline(t);
+    ['l1', 'l2', 'l3'].forEach(id => $(id).classList.remove('on'));
+    fade($('l1'), smooth(prog(t, T.text1In, T.text1In + 2.2)) * (1 - smooth(prog(t, T.text1Out, T.text1Out + 1.6))));
+    fade($('l2'), smooth(prog(t, T.text2, T.text2 + 2.2)));
+    fade($('l3'), smooth(prog(t, T.text3, T.text3 + 2.2)));
+    $('veil').style.opacity = smooth(prog(t, 27.2, 28));
+    dustMat.uniforms.uTime.value = t; grade.uniforms.uTime.value = t;
+    lightDirW.copy(rim.position).normalize().transformDirection(camera.matrixWorldInverse);
+    U.uLightDir.value.copy(lightDirW);
+    if (bokeh) bokeh.uniforms.focus.value = camera.position.distanceTo(camTarget);
+    composer.render(1 / 30);
+    return true;
+  };
+  window.__ready = true;
+}
+
+/* ---------- boot ---------- */
+(async function boot() {
+  if (new URLSearchParams(location.search).has('video')) { showFallback(); return; }
+  const gltf = await tryGLB();
+  if (gltf) useGLB(gltf); else built = buildBouquet();
+  bouquet.updateMatrixWorld(true);
+  const hero = flowers.find(f => f.hero);
+  if (hero) { heroWorld = new THREE.Vector3(); hero.head.getWorldPosition(heroWorld); heroWorld.y += hero.radius * .25; }
+  makeShots();
+  heroSpot.position.copy(heroWorld).add(V(.25, 1.9, .55)); heroSpot.target.position.copy(heroWorld);
+  aimBeam(heroBeam, heroSpot.position, heroWorld.clone().add(V(0, -.2, 0)));
+  aimBeam(keyBeam, key.position.clone().multiplyScalar(.75), keyTarget);
+  applyTimeline(0);
+  await (document.fonts ? document.fonts.ready : Promise.resolve());
+  if (new URLSearchParams(location.search).has('capture')) { setupCapture(); return; }
+  $('veil').style.opacity = 0;
+  if (new URLSearchParams(location.search).has('autoplay')) $('gate').click();
+  requestAnimationFrame(t => { clockPrev = t; frame(t); });
+  // test hook: ?t=18 jumps the timeline
+  const jump = parseFloat(new URLSearchParams(location.search).get('t'));
+  if (!isNaN(jump)) { $('gate').click(); timeline = jump; }
+})();
+</script>
+</body>
+</html>
